@@ -1,3 +1,7 @@
+// ============================================================
+// render.js — Semua gambar dipakai bentuk vektor sederhana.
+// Peta digambar SEKALI ke offscreen canvas (prerender).
+// ============================================================
 Game.Render = (function () {
   const C = Game.Config;
   const Colors = C.COLORS;
@@ -50,8 +54,6 @@ Game.Render = (function () {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.save();
-    const camX = lp.x - (window.innerWidth * (C.BASE_VIEW_TILES * C.TILE / window.innerWidth)) / 2;
-    const camY = lp.y - (window.innerHeight * (C.BASE_VIEW_TILES * C.TILE / window.innerWidth)) / 2;
     
     const viewW = (canvas.width / ctx.getTransform().a);
     const viewH = (canvas.height / ctx.getTransform().d);
@@ -100,12 +102,21 @@ Game.Render = (function () {
     if (w.boss && !w.boss.dead) drawBoss(ctx, w.boss, clock);
 
     Object.values(w.players).forEach(p => {
-      if (p.dead) return;
       ctx.save();
       ctx.translate(p.x, p.y);
+
+      if (p.dead) {
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.font = 'bold 9px "Baloo 2", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Pingsan...', 0, -p.r - 6);
+        ctx.restore();
+        return;
+      }
       
       if (p.invuln > 0 && Math.floor(clock * 12) % 2 === 0) {
-        ctx.restore(); return;
+        ctx.restore(); 
+        return;
       }
 
       ctx.fillStyle = p.color;
@@ -113,10 +124,13 @@ Game.Render = (function () {
       ctx.arc(0, 0, p.r, 0, Math.PI * 2);
       ctx.fill();
 
+      // MEMASUKKAN NAMA PLAYER KE DALAM LINGKARAN KARAKTER[cite: 2]
       ctx.fillStyle = '#0b1f17';
-      ctx.font = 'bold 9px sans-serif';
+      ctx.font = 'bold 9px "Baloo 2", sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(p.id === 'host' ? 'P1' : 'P2', 0, 3);
+      // Ambil 5 huruf pertama saja supaya pas di dalam lingkaran karakter[cite: 2]
+      const ringName = p.name ? p.name.substring(0, 5) : (p.id === 'host' ? 'P1' : 'P2');
+      ctx.fillText(ringName, 0, 3); 
 
       if (p.attackFlash > 0) {
         ctx.strokeStyle = 'rgba(255,255,255,0.8)';

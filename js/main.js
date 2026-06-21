@@ -1,3 +1,6 @@
+// ============================================================
+// main.js — Penghubung semua modul.
+// ============================================================
 (function () {
   const Config   = Game.Config;
   const World    = Game.World;
@@ -17,9 +20,10 @@
     screens[id].classList.add('active');
   }
 
+  // ---------- state global aplikasi ----------
   let net            = null;
   let isHost         = false;
-  let isSolo         = false;
+  let isSolo         = false;   
   let world          = null;
   let canvas, ctx;
   let rafId          = null;
@@ -28,21 +32,45 @@
   let broadcastAccum = 0;
   let inputAccum     = 0;
   let prevQuestCache = { gemsCollected: 0, slimesKilled: 0, stage: 'gems' };
+  
+  // Default nama player jika input kosong
+  let playerName     = "Pemain"; 
 
   Render.buildBackground(World.grid);
 
+  // Cegah scroll halaman dari sentuhan (mobile)
   document.addEventListener('touchmove', e => {
     if (screens['screen-game'].classList.contains('active')) {
       e.preventDefault();
     }
   }, { passive: false });
 
-  el('btn-host').addEventListener('click', startHostFlow);
+  // Ambil nama dari input sebelum pindah screen
+  function updatePlayerName() {
+    const inputName = el('player-name-input') ? el('player-name-input').value.trim() : "";
+    if (inputName.length > 0) {
+      playerName = inputName;
+    } else {
+      playerName = isHost ? "Pemain 1" : "Pemain 2";
+    }
+  }
+
+  // ============================================================
+  // EVENT TOMBOL MENU
+  // ============================================================
+  el('btn-host').addEventListener('click', () => {
+    updatePlayerName();
+    startHostFlow();
+  });
   el('btn-join').addEventListener('click', () => {
+    updatePlayerName();
     el('join-error').textContent = '';
     showScreen('screen-join');
   });
-  el('btn-solo').addEventListener('click', startSoloFlow);
+  el('btn-solo').addEventListener('click', () => {
+    updatePlayerName();
+    startSoloFlow();
+  });
 
   el('btn-join-cancel').addEventListener('click',  () => showScreen('screen-menu'));
   el('btn-host-cancel').addEventListener('click',  () => {
@@ -61,15 +89,22 @@
     if (e.key === 'Enter') startJoinFlow();
   });
 
+  // ============================================================
+  // SOLO MODE
+  // ============================================================
   function startSoloFlow() {
     isSolo  = true;
     isHost  = true;
     net     = null;
     initWorldAsHost();
+    world.players.host.name = playerName; // Set nama custom
     showScreen('screen-game');
     startLoop();
   }
 
+  // ============================================================
+  // HOST FLOW
+  // ============================================================
   function startHostFlow() {
     const code = Network.generateCode();
     net    = Network.create();
@@ -85,6 +120,11 @@
     });
     net.on('connected', () => {
       initWorldAsHost();
+      world.players.host.name = playerName; // Set nama host
+      
+      // Kirim info nama host ke guest saat pertama terkoneksi
+      net.send({ type: 'init_name', name: playerName });
+      
       showScreen('screen-game');
       startLoop();
     });
@@ -97,6 +137,9 @@
     net.host(code);
   }
 
+  // ============================================================
+  // JOIN FLOW
+  // ============================================================
   function startJoinFlow() {
     const code = el('join-code-input').value.trim();
     if (code.length < 4) {
@@ -120,6 +163,10 @@
       clearTimeout(timeout);
       resetJoinBtn();
       world = null;
+      
+      // Kirim nama guest ke host
+      net.send({ type: 'join_name', name: playerName });
+      
       showScreen('screen-game');
       startLoop();
     });
@@ -142,8 +189,8 @@
   function leaveGame() {
     stopLoop();
     if (net) net.destroy();
-    net = null;
-    world = null;
+    net    = null;
+    world  = null;
     isSolo = false;
     el('disconnect-toast').classList.remove('show');
     showScreen('screen-menu');
@@ -156,20 +203,23 @@
   function initWorldAsHost() {
     world = {
       players: {
-        host: Entities.createPlayer('host', Config.COLORS.p1),
+        host:  Entities.createPlayer('host',  Config.COLORS.p1),
         guest: Entities.createPlayer('guest', Config.COLORS.p2)
       },
-      gems: Entities.createGems(),
-      slimes: [],
-      boss: null,
-      quest: Quest.createInitial(),
+      gems:          Entities.createGems(),
+      slimes:        [],
+      boss:          null,
+      quest:         Quest.createInitial(),
       lastInputGuest: { x: 0, y: 0, attack: false }
     };
   }
 
+  // ============================================================
+  // GAME LOOP
+  // ============================================================
   function startLoop() {
     canvas = el('game-canvas');
-    ctx = canvas.getContext('2d');
+    ctx    = canvas.getContext('2d');
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
     Input.initKeyboard();
@@ -185,34 +235,34 @@
     window.removeEventListener('resize', resizeCanvas);
   }
 
+  // FIX SINKRONISASI KAMERA PC & HP (Menghilangkan Bug Karakter Hilang di PC)
   function resizeCanvas() {
     if (!canvas) return;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    canvas.width = w * dpr;
+    const dpr = 1; 
+    const w   = window.innerWidth;
+    const h   = window.innerHeight;
+
+    canvas.width  = w * dpr;
     canvas.height = h * dpr;
-    canvas.style.width = w + 'px';
+    canvas.style.width  = w + 'px';
     canvas.style.height = h + 'px';
 
     const desiredTiles = Config.BASE_VIEW_TILES;
-    const scale = (w / (desiredTiles * Config.TILE)) * dpr;
-    ctx.setTransform(scale, 0, 0, scale, 0, 0);
+    const scale  = w / (desiredTiles * Config.TILE);
+    
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(scale, scale);
   }
 
   function loop(now) {
     if (!rafId) return;
     let dt = (now - lastT) / 1000;
     if (dt > 0.1) dt = 0.1;
-    lastT = now;
-
+    lastT  = now;
     clock += dt;
 
-    if (isHost) {
-      updateHostLogic(dt);
-    } else {
-      updateClientLogic(dt);
-    }
+    if (isHost) hostTick(dt);
+    else        clientTick(dt);
 
     if (world) {
       const localId = isHost ? 'host' : 'guest';
@@ -223,49 +273,43 @@
     rafId = requestAnimationFrame(loop);
   }
 
-  function updateHostLogic(dt) {
+  function hostTick(dt) {
     if (!world) return;
 
-    const p1 = world.players.host;
-    const dir1 = Input.getDirection();
-    const atk1 = Input.consumeAttack();
+    const dir    = Input.getDirection();
+    const attack = Input.consumeAttack();
+    applyInputToPlayer(world.players.host, dir, attack);
 
-    if (!p1.dead) {
-      World.moveWithCollision(p1, dir1.x * Config.PLAYER_SPEED * dt, dir1.y * Config.PLAYER_SPEED * dt);
-      if (atk1) Entities.tryAttack(p1, world.slimes, world.boss);
-    }
+    const gIn = world.lastInputGuest;
+    applyInputToPlayer(world.players.guest, gIn, gIn.attack);
+    gIn.attack = false;
 
-    const p2 = world.players.guest;
-    if (!isSolo && !p2.dead) {
-      const dir2 = world.lastInputGuest;
-      World.moveWithCollision(p2, dir2.x * Config.PLAYER_SPEED * dt, dir2.y * Config.PLAYER_SPEED * dt);
-      if (dir2.attack) {
-        Entities.tryAttack(p2, world.slimes, world.boss);
-        dir2.attack = false;
+    function applyInputToPlayer(p, d, didAttack) {
+      if (!p.dead) {
+        World.moveWithCollision(p, d.x * Config.PLAYER_SPEED * dt,
+                                   d.y * Config.PLAYER_SPEED * dt);
+        if (didAttack) Entities.tryAttack(p, world.slimes, world.boss);
       }
-    }
-
-    Object.values(world.players).forEach(p => {
-      Entities.respawnTick(p, dt);
+      if (p.attackFlash   > 0) p.attackFlash   -= dt;
       if (p.attackCooldown > 0) p.attackCooldown -= dt;
-      if (p.attackFlash > 0) p.attackFlash -= dt;
-    });
-
-    Quest.update(world);
+    }
 
     world.slimes.forEach(s => Entities.updateSlime(s, world.players, dt));
     if (world.boss) Entities.updateBoss(world.boss, world.players, dt);
+    Object.values(world.players).forEach(p => Entities.respawnTick(p, dt));
 
-    if (!p1.dead) {
+    if (!world.players.host.dead) {
       world.gems.forEach(g => {
-        if (!g.taken && Math.hypot(p1.x - g.x, p1.y - g.y) < p1.r + 12) g.taken = true;
+        if (!g.taken && Math.hypot(world.players.host.x - g.x, world.players.host.y - g.y) < world.players.host.r + 12) g.taken = true;
       });
     }
-    if (!isSolo && !p2.dead) {
+    if (!isSolo && !world.players.guest.dead) {
       world.gems.forEach(g => {
-        if (!g.taken && Math.hypot(p2.x - g.x, p2.y - g.y) < p2.r + 12) g.taken = true;
+        if (!g.taken && Math.hypot(world.players.guest.x - g.x, world.players.guest.y - g.y) < world.players.guest.r + 12) g.taken = true;
       });
     }
+
+    Quest.update(world);
 
     if (!isSolo) {
       broadcastAccum += dt;
@@ -276,39 +320,46 @@
     }
   }
 
-  function updateClientLogic(dt) {
-    inputAccum += dt;
+  function handleHostData(msg) {
+    if (!world) return;
+    if (msg.type === 'input') {
+      const gi = world.lastInputGuest;
+      gi.x = msg.x;
+      gi.y = msg.y;
+      if (msg.attack) gi.attack = true;
+    } else if (msg.type === 'join_name') {
+      world.players.guest.name = msg.name; // Simpan nama guest yang dikirim ke host
+    }
+  }
+
+  function clientTick(dt) {
+    inputAccum  += dt;
     if (inputAccum >= 1 / Config.INPUT_SEND_RATE) {
       inputAccum = 0;
-      const dir = Input.getDirection();
-      const atk = Input.consumeAttack();
-      if (net) net.send({ type: 'input', x: dir.x, y: dir.y, attack: atk });
+      const dir    = Input.getDirection();
+      const attack = Input.consumeAttack();
+      net.send({ type: 'input', x: dir.x, y: dir.y, attack });
     }
   }
 
-  function handleHostData(data) {
-    if (data.type === 'input' && world) {
-      world.lastInputGuest.x = data.x;
-      world.lastInputGuest.y = data.y;
-      if (data.attack) world.lastInputGuest.attack = true;
+  function handleClientData(msg) {
+    if (msg.type === 'world') {
+      world = msg.world;
+    } else if (msg.type === 'init_name' && world) {
+      world.players.host.name = msg.name; // Tampilkan nama host di screen guest
     }
   }
 
-  function handleClientData(data) {
-    if (data.type === 'world') {
-      world = data.world;
-    }
-  }
-
+  // ============================================================
+  // HUD
+  // ============================================================
   function updateHud() {
     if (!world) return;
     const q = world.quest;
+
     let progressText = '';
-    
-    if (q.stage === 'gems') 
-      progressText = `💎 Kristal: ${q.gemsCollected}/${q.gemsTotal}`;
-    else if (q.stage === 'slimes') 
-      progressText = `⚔️ Slime: ${q.slimesKilled}/${q.slimesTotal}`;
+    if      (q.stage === 'gems')   progressText = `💎 Kristal: ${q.gemsCollected}/${q.gemsTotal}`;
+    else if (q.stage === 'slimes') progressText = `⚔️ Slime: ${q.slimesKilled}/${q.slimesTotal}`;
     else if (q.stage === 'boss' && world.boss)
       progressText = `👑 Bos: ${Math.max(0, Math.ceil(world.boss.hp))}/${world.boss.maxHp}`;
 
@@ -327,7 +378,6 @@
     if (q.gemsCollected  > prevQuestCache.gemsCollected)  showToast('+1 Kristal!');
     if (q.slimesKilled   > prevQuestCache.slimesKilled)   showToast('Slime dikalahkan!');
     if (q.stage          !== prevQuestCache.stage)         showToast(q.message, true);
-    
     prevQuestCache = {
       gemsCollected: q.gemsCollected,
       slimesKilled:  q.slimesKilled,
@@ -344,7 +394,7 @@
   function showToast(text, big) {
     const zone = el('toast-zone');
     const t    = document.createElement('div');
-    t.className = 'toast' + (big ? ' toast-big' : '');
+    t.className  = 'toast' + (big ? ' toast-big' : '');
     t.textContent = text;
     zone.appendChild(t);
     setTimeout(() => t.classList.add('show'), 10);

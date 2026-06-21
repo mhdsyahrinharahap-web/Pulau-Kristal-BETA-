@@ -1,9 +1,3 @@
-// ============================================================
-// entities.js — Pembuat & pembaru entitas: pemain, kristal, slime, boss.
-// Logika gerak/AI/combat di file ini HANYA dijalankan oleh HOST
-// (host = pemegang kebenaran dunia game). Client hanya menampilkan
-// hasil yang dikirim oleh host.
-// ============================================================
 Game.Entities = (function () {
   const C = Game.Config;
   const World = Game.World;
@@ -43,7 +37,6 @@ Game.Entities = (function () {
 
   function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
 
-  // --- AI Slime: mengembara santai, mengejar pemain terdekat kalau dekat ---
   function updateSlime(slime, players, dt) {
     if (slime.dead) return;
     if (slime.hitFlash > 0) slime.hitFlash -= dt;
@@ -69,45 +62,51 @@ Game.Entities = (function () {
 
     const dx = tx - slime.x, dy = ty - slime.y;
     const len = Math.hypot(dx, dy) || 1;
-    World.moveWithCollision(slime, (dx / len) * C.SLIME_SPEED, (dy / len) * C.SLIME_SPEED, dt);
+    World.moveWithCollision(slime, (dx / len) * C.SLIME_SPEED * dt, (dy / len) * C.SLIME_SPEED * dt);
 
-    if (chase && slime.bumpCooldown <= 0 && dist(slime, chase) < slime.r + chase.r) {
-      damagePlayer(chase, C.SLIME_DAMAGE);
-      slime.bumpCooldown = 1;
+    if (slime.bumpCooldown <= 0) {
+      Object.values(players).forEach(p => {
+        if (!p.dead && dist(slime, p) < slime.r + p.r) {
+          damagePlayer(p, C.SLIME_DAMAGE);
+          slime.bumpCooldown = 0.8;
+        }
+      });
     }
   }
 
-  // --- AI Boss: mengejar pemain terdekat, sesekali "hentakan tanah" ---
   function updateBoss(boss, players, dt) {
     if (boss.dead) return;
     if (boss.hitFlash > 0) boss.hitFlash -= dt;
 
-    let target = null, best = Infinity;
+    let target = null, best = 999998;
     Object.values(players).forEach(p => {
-      if (p.dead) return;
-      const d = dist(boss, p);
-      if (d < best) { best = d; target = p; }
+      if (!p.dead) { const d = dist(boss, p); if (d < best) { best = d; target = p; } }
     });
+    if (!target) return;
 
-    if (target) {
-      const dx = target.x - boss.x, dy = target.y - boss.y;
-      const len = Math.hypot(dx, dy) || 1;
-      if (len > boss.r) {
-        World.moveWithCollision(boss, (dx / len) * C.BOSS_SPEED, (dy / len) * C.BOSS_SPEED, dt);
-      }
-      if (dist(boss, target) < boss.r + target.r + 4) {
-        damagePlayer(target, C.BOSS_DAMAGE * dt * 1.2);
+    boss.slamTimer -= dt;
+    if (boss.slamTimer <= 0) {
+      boss.charging = true;
+      if (boss.slamTimer <= -0.6) {
+        boss.charging = false;
+        Object.values(players).forEach(p => {
+          if (dist(boss, p) < C.BOSS_SLAM_RADIUS) damagePlayer(p, C.BOSS_SLAM_DAMAGE);
+        });
+        const [a, b] = C.BOSS_SLAM_INTERVAL;
+        boss.slamTimer = a + Math.random() * (b - a);
       }
     }
 
-    boss.slamTimer -= dt;
-    boss.charging = boss.slamTimer < 1;
-    if (boss.slamTimer <= 0) {
+    if (!boss.charging) {
+      const dx = target.x - boss.x, dy = target.y - boss.y;
+      const len = Math.hypot(dx, dy) || 1;
+      World.moveWithCollision(boss, (dx / len) * C.BOSS_SPEED * dt, (dy / len) * C.BOSS_SPEED * dt);
+      
       Object.values(players).forEach(p => {
-        if (!p.dead && dist(boss, p) < C.BOSS_SLAM_RADIUS) damagePlayer(p, C.BOSS_SLAM_DAMAGE);
+        if (!p.dead && dist(boss, p) < boss.r + p.r) {
+          damagePlayer(p, C.BOSS_DAMAGE);
+        }
       });
-      const [a, b] = C.BOSS_SLAM_INTERVAL;
-      boss.slamTimer = a + Math.random() * (b - a);
     }
   }
 
@@ -129,27 +128,25 @@ Game.Entities = (function () {
     }
   }
 
-  // pemain menyerang musuh dalam radius — efek "tebasan area" sederhana
   function tryAttack(p, slimes, boss) {
     if (p.dead || p.attackCooldown > 0) return false;
     p.attackCooldown = C.ATTACK_COOLDOWN;
     p.attackFlash = 0.15;
-    let hit = false;
+
+    let hitAny = false;
     slimes.forEach(s => {
-      if (!s.dead && dist(p, s) < C.ATTACK_RANGE) {
-        s.hp -= 1; s.hitFlash = 0.15; hit = true;
+      if (!s.dead && dist(p, s) < C.ATTACK_RANGE + s.r) {
+        s.hp -= 1; s.hitFlash = 0.15; hitAny = true;
         if (s.hp <= 0) s.dead = true;
       }
     });
-    if (boss && !boss.dead && dist(p, boss) < C.ATTACK_RANGE + boss.r - 14) {
-      boss.hp -= 1; boss.hitFlash = 0.15; hit = true;
+
+    if (boss && !boss.dead && dist(p, boss) < C.ATTACK_RANGE + boss.r) {
+      boss.hp -= 1; boss.hitFlash = 0.15; hitAny = true;
       if (boss.hp <= 0) boss.dead = true;
     }
-    return hit;
+    return true;
   }
 
-  return {
-    createPlayer, createGems, createSlime, createBoss,
-    updateSlime, updateBoss, damagePlayer, respawnTick, tryAttack, dist
-  };
+  return { createPlayer, createGems, createSlime, createBoss, updateSlime, updateBoss, respawnTick, tryAttack };
 })();

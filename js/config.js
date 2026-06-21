@@ -1,17 +1,11 @@
-// ============================================================
-// config.js — Semua angka & konstanta game ada di sini.
-// File ini dimuat PALING AWAL, jadi modul lain bisa pakai Game.Config
-// ============================================================
 window.Game = window.Game || {};
 
 Game.Config = {
-  // ukuran dunia
   TILE: 48,
   MAP_W: 22,
   MAP_H: 14,
-  BASE_VIEW_TILES: 12, // berapa petak yang terlihat secara horizontal di layar
+  BASE_VIEW_TILES: 12,
 
-  // pemain
   PLAYER_SPEED: 165,
   PLAYER_RADIUS: 15,
   PLAYER_MAX_HP: 5,
@@ -20,14 +14,11 @@ Game.Config = {
   ATTACK_COOLDOWN: 0.4,
   RESPAWN_TIME: 2.5,
 
-  // jaringan
-  TICK_RATE: 18,       // berapa kali per detik host mengirim data dunia
-  INPUT_SEND_RATE: 20,  // berapa kali per detik client mengirim input
+  TICK_RATE: 18,
+  INPUT_SEND_RATE: 20,
 
-  // quest 1: kristal
   GEM_TOTAL: 6,
 
-  // quest 2: slime
   SLIME_TOTAL: 4,
   SLIME_HP: 2,
   SLIME_SPEED: 65,
@@ -35,39 +26,34 @@ Game.Config = {
   SLIME_AGGRO_RANGE: 150,
   SLIME_RADIUS: 14,
 
-  // quest 3: boss
   BOSS_HP: 24,
   BOSS_SPEED: 75,
   BOSS_DAMAGE: 2,
   BOSS_RADIUS: 26,
   BOSS_SLAM_RADIUS: 95,
   BOSS_SLAM_DAMAGE: 2,
-  BOSS_SLAM_INTERVAL: [4, 6.5],
+  BOSS_SLAM_INTERVAL: [3, 5],
 
-  TILE_TYPE: { GRASS: 0, ROCK: 1, WATER: 2, TREE: 3, PATH: 4 },
+  TILE_TYPE: {
+    GRASS: 0,
+    ROCK: 1,
+    WATER: 2,
+    TREE: 3,
+    PATH: 4
+  },
 
   COLORS: {
-    grass: '#1c4a36',
-    grassAlt: '#225840',
-    path: '#c9a467',
-    pathEdge: '#a8824a',
-    water: '#2a6f7f',
-    waterLight: '#3a8a9c',
-    rock: '#4a4a44',
-    rockDark: '#36352f',
-    treeTrunk: '#5b4128',
-    treeLeaf: '#2f6e4a',
-    p1: '#52e0d6',
-    p1Dark: '#2bb8ad',
-    p2: '#ff8a5b',
-    p2Dark: '#e0653a',
-    gem: '#ffd166',
-    gemLight: '#fff0c2',
-    slime: '#7fd66e',
-    slimeDark: '#57a84a',
-    boss: '#8a5cff',
-    bossDark: '#5c3bb0',
-    gate: '#8d8a7c',
-    gateOpen: '#ffd166'
+    water: '#1d4f40',
+    waterLight: '#225a49',
+    grass: '#2e6f40',
+    grassLight: '#357d4a',
+    rock: '#4a5359',
+    tree: '#163a21',
+    path: '#6d755d',
+    p1: '#ffd166',
+    p2: '#52e0d6',
+    slime: '#74c365',
+    boss: '#9b5de5',
+    bossDark: '#6f2dbd'
   }
 };

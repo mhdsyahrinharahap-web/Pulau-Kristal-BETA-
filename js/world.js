@@ -1,17 +1,5 @@
-cat > /home/claude/pulau-kristal/js/world.js << 'ENDOFFILE'
 // ============================================================
 // world.js — Peta pulau: grid tile, collision, titik-titik spawn.
-//
-// FIX KRITIS:
-//   Spawn host & guest, serta 2 gem spot, berada di tile POHON (TREE).
-//   circleBlocked() mengembalikan TRUE → moveWithCollision() tidak pernah
-//   menggeser player → itulah kenapa karakter DIAM TOTAL meski input benar.
-//
-//   Koordinat yang diperbaiki:
-//     spawnPoints.host  : y 11.5 → 12.5  (tile y=11 = TREE → tile y=12 = GRASS)
-//     spawnPoints.guest : y 11.5 → 12.5  (tile y=11 = TREE → tile y=12 = GRASS)
-//     gemSpots[0]       : y 2.5  → 3.5   (tile y=2  = TREE → tile y=3  = GRASS)
-//     gemSpots[1]       : y 2.5  → 3.5   (tile y=2  = TREE → tile y=3  = GRASS)
 // ============================================================
 Game.World = (function () {
   const C = Game.Config;
@@ -33,7 +21,6 @@ Game.World = (function () {
       for (let x = 7; x <= 11; x++) grid[y][x] = T.WATER;
     }
     // gerumbul pohon di pojok-pojok
-    // Catatan: [x=3,y=11] dan [x=18,y=11] adalah TREE — spawn lama ada di sini!
     [[2, 2], [3, 2], [2, 3], [19, 2], [18, 2], [19, 3],
      [2, 10], [3, 11], [18, 11], [19, 10]].forEach(([x, y]) => {
       if (grid[y] && grid[y][x] !== undefined) grid[y][x] = T.TREE;
@@ -57,22 +44,31 @@ Game.World = (function () {
     return type === T.ROCK || type === T.WATER || type === T.TREE;
   }
 
-  function circleBlocked(px, py, r) {
-    const pts = [
-      [px, py],
-      [px + r, py], [px - r, py], [px, py + r], [px, py - r],
-      [px + r * 0.7, py + r * 0.7], [px - r * 0.7, py + r * 0.7],
-      [px + r * 0.7, py - r * 0.7], [px - r * 0.7, py - r * 0.7]
-    ];
-    return pts.some(([x, y]) => isBlockedTile(tileAt(x, y)));
+  function circleBlocked(cx, cy, r) {
+    const steps = 8;
+    for (let i = 0; i < steps; i++) {
+      const angle = (i / steps) * Math.PI * 2;
+      const px = cx + Math.cos(angle) * r;
+      const py = cy + Math.sin(angle) * r;
+      if (isBlockedTile(tileAt(px, py))) return true;
+    }
+    return false;
   }
 
-  function moveWithCollision(entity, dx, dy, dt) {
-    const r = entity.r || 14;
-    const nx = entity.x + dx * dt;
-    const ny = entity.y + dy * dt;
-    if (!circleBlocked(nx, entity.y, r)) entity.x = nx;
-    if (!circleBlocked(entity.x, ny, r)) entity.y = ny;
+  function moveWithCollision(entity, dx, dy) {
+    if (dx === 0 && dy === 0) return;
+    
+    // Coba gerak horizontal dulu
+    const newX = entity.x + dx;
+    if (!circleBlocked(newX, entity.y, entity.r)) {
+      entity.x = newX;
+    }
+    
+    // Coba gerak vertikal
+    const newY = entity.y + dy;
+    if (!circleBlocked(entity.x, newY, entity.r)) {
+      entity.y = newY;
+    }
   }
 
   function randomWalkablePoint() {
@@ -89,35 +85,32 @@ Game.World = (function () {
   const pixelW = grid[0].length * C.TILE;
   const pixelH = grid.length * C.TILE;
 
-  // FIX: y 11.5 → 12.5 (tile y=11 adalah TREE, tile y=12 adalah GRASS)
+  // DI SINI FIX-NYA: Mengubah koordinat Y dari 11.5 -> 12.5 dan 2.5 -> 3.5
   const spawnPoints = {
-    host:  { x: 3.5 * C.TILE, y: 12.5 * C.TILE },
+    host:  { x: 3.5  * C.TILE, y: 12.5 * C.TILE },
     guest: { x: 18.5 * C.TILE, y: 12.5 * C.TILE }
   };
 
-  // FIX: gem[0] dan gem[1] y 2.5 → 3.5 (tile y=2 adalah TREE, tile y=3 adalah GRASS)
   const gemSpots = [
-    { x: 3.5  * C.TILE, y: 3.5  * C.TILE },  // FIX: was y=2.5 (TREE tile)
-    { x: 18.5 * C.TILE, y: 3.5  * C.TILE },  // FIX: was y=2.5 (TREE tile)
-    { x: 10.5 * C.TILE, y: 2.5  * C.TILE },
-    { x: 10.5 * C.TILE, y: 12.5 * C.TILE },
-    { x: 5.5  * C.TILE, y: 8.5  * C.TILE },
-    { x: 15.5 * C.TILE, y: 8.5  * C.TILE }
+    { x: 3.5  * C.TILE, y: 3.5  * C.TILE },
+    { x: 18.5 * C.TILE, y: 3.5  * C.TILE },
+    { x: 11.0 * C.TILE, y: 8.5  * C.TILE },
+    { x: 5.0  * C.TILE, y: 5.0  * C.TILE },
+    { x: 16.0 * C.TILE, y: 5.0  * C.TILE },
+    { x: 11.0 * C.TILE, y: 2.0  * C.TILE }
   ];
 
   const slimeSpots = [
-    { x: 6  * C.TILE, y: 5   * C.TILE },
-    { x: 16 * C.TILE, y: 5   * C.TILE },
-    { x: 6  * C.TILE, y: 9.5 * C.TILE },
-    { x: 16 * C.TILE, y: 9.5 * C.TILE }
+    { x: 5 * C.TILE, y: 4 * C.TILE },
+    { x: 16 * C.TILE, y: 4 * C.TILE },
+    { x: 4 * C.TILE, y: 9 * C.TILE },
+    { x: 17 * C.TILE, y: 9 * C.TILE }
   ];
 
-  const gatePos   = { x: 11 * C.TILE, y: 1.6 * C.TILE };
-  const bossSpawn = { x: 11 * C.TILE, y: 7   * C.TILE };
+  const bossSpawn = { x: 11 * C.TILE, y: 5.5 * C.TILE };
 
   return {
-    grid, tileAt, isBlockedTile, circleBlocked, moveWithCollision,
-    randomWalkablePoint, pixelW, pixelH, spawnPoints, gemSpots,
-    slimeSpots, gatePos, bossSpawn
+    grid, tileAt, circleBlocked, moveWithCollision, randomWalkablePoint,
+    pixelW, pixelH, spawnPoints, gemSpots, slimeSpots, bossSpawn
   };
 })();

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0f2e22">
+<title>Pulau Kristal — Petualangan Co-op 2 Pemain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ===================== MENU UTAMA ===================== -->
+  <section id="screen-menu" class="screen active">
+    <div class="menu-card">
+      <div class="crystal-logo"><span class="crystal-ico">&#9670;</span></div>
+      <h1 class="game-title">PULAU<br>KRISTAL</h1>
+      <p class="game-subtitle">Petualangan co-op 2 pemain langsung di browser</p>
+      <button class="btn btn-primary" id="btn-host">Buat Room</button>
+      <button class="btn btn-secondary" id="btn-join">Gabung Room</button>
+      <p class="menu-hint">Mainkan bersama 1 teman secara online.<br>Satu orang buat room, satu orang gabung pakai kode.</p>
+    </div>
+  </section>
+
+  <!-- ===================== HOST: TUNGGU PEMAIN ===================== -->
+  <section id="screen-host" class="screen">
+    <div class="menu-card">
+      <h2 class="panel-title">ROOM KAMU</h2>
+      <div class="room-code" id="room-code-display">-----</div>
+      <p class="panel-text">Bagikan kode ini ke temanmu untuk bergabung.</p>
+      <div class="status-row">
+        <span class="spinner"></span>
+        <span id="host-status-text">Menunggu pemain lain...</span>
+      </div>
+      <button class="btn btn-ghost" id="btn-host-cancel">Batal</button>
+    </div>
+  </section>
+
+  <!-- ===================== JOIN: MASUKKAN KODE ===================== -->
+  <section id="screen-join" class="screen">
+    <div class="menu-card">
+      <h2 class="panel-title">GABUNG ROOM</h2>
+      <p class="panel-text">Masukkan kode room dari temanmu.</p>
+      <input id="join-code-input" class="code-input" maxlength="5" placeholder="KODE" autocomplete="off" autocapitalize="characters">
+      <button class="btn btn-primary" id="btn-join-confirm">Gabung</button>
+      <button class="btn btn-ghost" id="btn-join-cancel">Batal</button>
+      <p class="error-text" id="join-error"></p>
+    </div>
+  </section>
+
+  <!-- ===================== GAME ===================== -->
+  <section id="screen-game" class="screen">
+    <canvas id="game-canvas"></canvas>
+
+    <div class="hud-top">
+      <div class="quest-chip">
+        <div class="crystal-track" id="crystal-track">
+          <span class="crystal-dot" data-stage="gems"></span>
+          <span class="crystal-dot" data-stage="slimes"></span>
+          <span class="crystal-dot" data-stage="boss"></span>
+        </div>
+        <span class="quest-progress" id="quest-progress"></span>
+      </div>
+      <div class="hearts" id="hearts"></div>
+    </div>
+
+    <div class="quest-banner" id="quest-banner"></div>
+    <div class="toast-zone" id="toast-zone"></div>
+
+    <button class="btn-leave" id="btn-leave" aria-label="Keluar dari game">&#10005;</button>
+
+    <div class="touch-controls">
+      <div class="joy-base" id="joy-base"><div class="joy-stick" id="joy-stick"></div></div>
+      <button class="attack-btn" id="attack-btn" aria-label="Serang">&#9876;</button>
+    </div>
+  </section>
+
+  <!-- ===================== VICTORY ===================== -->
+  <section id="screen-victory" class="screen">
+    <div class="menu-card">
+      <div class="crystal-logo crystal-logo-spin"><span class="crystal-ico">&#9670;</span></div>
+      <h2 class="panel-title">MISI SELESAI!</h2>
+      <p class="panel-text" id="victory-text">Kalian berhasil menyelamatkan Pulau Kristal!</p>
+      <button class="btn btn-primary" id="btn-play-again">Main Lagi</button>
+    </div>
+  </section>
+
+  <div class="disconnect-toast" id="disconnect-toast">Koneksi dengan teman terputus.</div>
+
+</div>
+
+<!-- PeerJS: library WebRTC untuk koneksi peer-to-peer (tanpa server sendiri) -->
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+
+<!-- modul-modul game, urutan penting (config dulu, main.js terakhir) -->
+<script src="js/config.js"></script>
+<script src="js/world.js"></script>
+<script src="js/entities.js"></script>
+<script src="js/quest.js"></script>
+<script src="js/render.js"></script>
+<script src="js/input.js"></script>
+<script src="js/network.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

@@ -1,11 +1,5 @@
-// ============================================================
-// network.js — Pembungkus PeerJS (WebRTC) untuk koneksi 2 pemain.
-// Tidak butuh server sendiri: PeerJS memakai signaling server publik
-// gratis hanya untuk "memperkenalkan" 2 browser, lalu data game
-// mengalir langsung peer-to-peer (P2P).
-// ============================================================
 Game.Network = (function () {
-  const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // tanpa O/0/I/1 biar gak ambigu
+  const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   const PREFIX = 'pulaukristal-';
 
   function generateCode(len) {
@@ -52,13 +46,12 @@ Game.Network = (function () {
     }
 
     function destroy() {
-      try { if (conn) conn.close(); } catch (e) {}
-      try { if (peer) peer.destroy(); } catch (e) {}
-      peer = null; conn = null;
+      if (conn) { conn.close(); conn = null; }
+      if (peer) { peer.destroy(); peer = null; }
     }
 
-    return { on, host, join, send, destroy, get isHost() { return isHost; } };
+    return { on, host, join, send, destroy };
   }
 
-  return { create, generateCode };
+  return { generateCode, create };
 })();

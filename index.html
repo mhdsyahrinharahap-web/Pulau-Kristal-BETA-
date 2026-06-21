@@ -11,9 +11,8 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<div id="app">
+<div id=\"app\">
 
-  <!-- ===================== MENU UTAMA ===================== -->
   <section id="screen-menu" class="screen active">
     <div class="menu-card">
       <div class="crystal-logo"><span class="crystal-ico">&#9670;</span></div>
@@ -21,59 +20,41 @@
       <p class="game-subtitle">Petualangan co-op 2 pemain langsung di browser</p>
       <button class="btn btn-primary" id="btn-host">Buat Room</button>
       <button class="btn btn-secondary" id="btn-join">Gabung Room</button>
-      <!-- FIX: Tombol main sendiri untuk testing tanpa jaringan -->
-      <button class="btn btn-solo" id="btn-solo">&#127918; Main Sendiri</button>
-      <p class="menu-hint">
-        Mainkan bersama 1 teman secara online.<br>
-        Satu orang buat room, satu orang gabung pakai kode.<br>
-        <em>Atau coba "Main Sendiri" untuk testing tanpa teman.</em>
-      </p>
+      <button class="btn btn-solo" id="btn-solo">Main Sendiri</button>
     </div>
   </section>
 
-  <!-- ===================== HOST: TUNGGU PEMAIN ===================== -->
   <section id="screen-host" class="screen">
     <div class="menu-card">
-      <h2 class="panel-title">ROOM KAMU</h2>
-      <div class="room-code" id="room-code-display">-----</div>
-      <p class="panel-text">Bagikan kode ini ke temanmu untuk bergabung.</p>
-      <div class="status-row">
-        <span class="spinner"></span>
-        <span id="host-status-text">Menunggu pemain lain...</span>
-      </div>
-      <button class="btn btn-ghost" id="btn-host-cancel">Batal</button>
+      <h2 class="panel-title">ROOM BERHASIL DIBUAT</h2>
+      <p class="panel-text">Bagikan kode di bawah ini kepada temanmu:</p>
+      <div class="code-box" id="room-code-display">-----</div>
+      <p class="status-loading" id="host-status-text">Menunggu pemain lain...</p>
+      <button class="btn btn-danger" id="btn-host-cancel">Batal</button>
     </div>
   </section>
 
-  <!-- ===================== JOIN: MASUKKAN KODE ===================== -->
   <section id="screen-join" class="screen">
     <div class="menu-card">
-      <h2 class="panel-title">GABUNG ROOM</h2>
-      <p class="panel-text">Masukkan kode room dari temanmu.</p>
-      <input id="join-code-input" class="code-input" maxlength="5" placeholder="KODE"
-             autocomplete="off" autocapitalize="characters" inputmode="text">
-      <button class="btn btn-primary" id="btn-join-confirm">Gabung</button>
-      <button class="btn btn-ghost" id="btn-join-cancel">Batal</button>
-      <p class="error-text" id="join-error"></p>
+      <h2 class="panel-title">GABUNG PETUALANGAN</h2>
+      <p class="panel-text">Masukkan kode room yang diberikan oleh Host:</p>
+      <input type="text" class="code-input" id="join-code-input" maxlength="5" placeholder="KODE" autocomplete="off">
+      <div class="error-text" id="join-error"></div>
+      <div style="display:flex; gap:12px; width:100%; margin-top:8px;">
+        <button class="btn btn-danger" id="btn-join-cancel" style="flex:1;">Batal</button>
+        <button class="btn btn-primary" id="btn-join-confirm" style="flex:2;">Gabung</button>
+      </div>
     </div>
   </section>
 
-  <!-- ===================== GAME ===================== -->
   <section id="screen-game" class="screen">
     <canvas id="game-canvas"></canvas>
-
+    
     <div class="hud-top">
-      <div class="quest-chip">
-        <div class="crystal-track" id="crystal-track">
-          <span class="crystal-dot" data-stage="gems"></span>
-          <span class="crystal-dot" data-stage="slimes"></span>
-          <span class="crystal-dot" data-stage="boss"></span>
-        </div>
-        <span class="quest-progress" id="quest-progress"></span>
-      </div>
-      <div class="hearts" id="hearts"></div>
+      <div class="hud-hearts" id="hearts"></div>
+      <div class="hud-quest-progress" id="quest-progress"></div>
     </div>
-
+    
     <div class="quest-banner" id="quest-banner"></div>
     <div class="toast-zone" id="toast-zone"></div>
 
@@ -87,7 +68,6 @@
     </div>
   </section>
 
-  <!-- ===================== VICTORY ===================== -->
   <section id="screen-victory" class="screen">
     <div class="menu-card">
       <div class="crystal-logo crystal-logo-spin"><span class="crystal-ico">&#9670;</span></div>
@@ -101,10 +81,7 @@
 
 </div>
 
-<!-- PeerJS: library WebRTC untuk koneksi peer-to-peer -->
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-
-<!-- Modul game — urutan penting (config dulu, main.js terakhir) -->
 <script src="js/config.js"></script>
 <script src="js/world.js"></script>
 <script src="js/entities.js"></script>

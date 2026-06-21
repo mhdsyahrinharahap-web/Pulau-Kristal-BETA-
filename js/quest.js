@@ -1,8 +1,3 @@
-// ============================================================
-// quest.js — Mesin quest 3 tahap: Kristal -> Slime -> Boss -> Menang.
-// Hanya dijalankan oleh HOST. Client cukup membaca world.quest yang
-// dikirim host dan menampilkannya di HUD.
-// ============================================================
 Game.Quest = (function () {
   const C = Game.Config;
   const Entities = Game.Entities;
@@ -26,7 +21,6 @@ Game.Quest = (function () {
     };
   }
 
-  // dipanggil tiap tick simulasi, hanya oleh HOST
   function update(world) {
     const q = world.quest;
 
@@ -41,8 +35,8 @@ Game.Quest = (function () {
       q.slimesKilled = world.slimes.filter(s => s.dead).length;
       if (q.slimesKilled >= q.slimesTotal) {
         q.stage = 'boss';
-        q.gateOpen = true;
         q.message = TEXTS.boss;
+        q.gateOpen = true;
         world.boss = Entities.createBoss();
       }
     } else if (q.stage === 'boss') {
@@ -53,5 +47,5 @@ Game.Quest = (function () {
     }
   }
 
-  return { createInitial, update, TEXTS };
+  return { TEXTS, createInitial, update };
 })();

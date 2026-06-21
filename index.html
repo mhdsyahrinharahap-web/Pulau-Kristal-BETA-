@@ -21,7 +21,13 @@
       <p class="game-subtitle">Petualangan co-op 2 pemain langsung di browser</p>
       <button class="btn btn-primary" id="btn-host">Buat Room</button>
       <button class="btn btn-secondary" id="btn-join">Gabung Room</button>
-      <p class="menu-hint">Mainkan bersama 1 teman secara online.<br>Satu orang buat room, satu orang gabung pakai kode.</p>
+      <!-- FIX: Tombol main sendiri untuk testing tanpa jaringan -->
+      <button class="btn btn-solo" id="btn-solo">&#127918; Main Sendiri</button>
+      <p class="menu-hint">
+        Mainkan bersama 1 teman secara online.<br>
+        Satu orang buat room, satu orang gabung pakai kode.<br>
+        <em>Atau coba "Main Sendiri" untuk testing tanpa teman.</em>
+      </p>
     </div>
   </section>
 
@@ -44,7 +50,8 @@
     <div class="menu-card">
       <h2 class="panel-title">GABUNG ROOM</h2>
       <p class="panel-text">Masukkan kode room dari temanmu.</p>
-      <input id="join-code-input" class="code-input" maxlength="5" placeholder="KODE" autocomplete="off" autocapitalize="characters">
+      <input id="join-code-input" class="code-input" maxlength="5" placeholder="KODE"
+             autocomplete="off" autocapitalize="characters" inputmode="text">
       <button class="btn btn-primary" id="btn-join-confirm">Gabung</button>
       <button class="btn btn-ghost" id="btn-join-cancel">Batal</button>
       <p class="error-text" id="join-error"></p>
@@ -73,7 +80,9 @@
     <button class="btn-leave" id="btn-leave" aria-label="Keluar dari game">&#10005;</button>
 
     <div class="touch-controls">
-      <div class="joy-base" id="joy-base"><div class="joy-stick" id="joy-stick"></div></div>
+      <div class="joy-base" id="joy-base">
+        <div class="joy-stick" id="joy-stick"></div>
+      </div>
       <button class="attack-btn" id="attack-btn" aria-label="Serang">&#9876;</button>
     </div>
   </section>
@@ -92,10 +101,10 @@
 
 </div>
 
-<!-- PeerJS: library WebRTC untuk koneksi peer-to-peer (tanpa server sendiri) -->
+<!-- PeerJS: library WebRTC untuk koneksi peer-to-peer -->
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 
-<!-- modul-modul game, urutan penting (config dulu, main.js terakhir) -->
+<!-- Modul game — urutan penting (config dulu, main.js terakhir) -->
 <script src="js/config.js"></script>
 <script src="js/world.js"></script>
 <script src="js/entities.js"></script>
